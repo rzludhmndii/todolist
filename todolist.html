@@ -1,0 +1,766 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blossom To-Do Symphony</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #fff;
+      --bg2: #fff0f5;
+      --tx: #5c2145;
+      --mut: #9c5f86;
+      --a1: #ffb6c1;
+      --a2: #ff69b4;
+      --a3: #ff1493;
+      --glass: rgba(255, 255, 255, 0.62);
+      --gb: rgba(255, 105, 180, 0.26);
+      --hi: #ff1493;
+      --md: #ff69b4;
+      --lo: #ffb6c1;
+      --sh: 0 18px 45px rgba(255, 20, 147, 0.16);
+    }
+
+    body.dark {
+      --bg: #2d0e24;
+      --bg2: #49213a;
+      --tx: #ffe4f2;
+      --mut: #ffb6d8;
+      --a1: #d96aa9;
+      --a2: #ff4fa7;
+      --a3: #ff7fc8;
+      --glass: rgba(86, 29, 66, 0.66);
+      --gb: rgba(255, 127, 200, 0.35);
+      --hi: #ff3ca8;
+      --md: #ff78c1;
+      --lo: #f8a5d3;
+      --sh: 0 22px 45px rgba(0, 0, 0, 0.4);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Poppins", sans-serif;
+      color: var(--tx);
+      background:
+        radial-gradient(circle at 10% 10%, rgba(255, 182, 193, 0.35), transparent 30%),
+        radial-gradient(circle at 90% 20%, rgba(255, 105, 180, 0.22), transparent 28%),
+        linear-gradient(135deg, var(--bg), var(--bg2));
+      overflow-x: hidden;
+      transition: background .45s;
+    }
+
+    .petal-field { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+    .petal {
+      position: absolute; width: 18px; height: 18px; border-radius: 70% 30% 60% 40%;
+      background: linear-gradient(145deg, rgba(255, 182, 193, .85), rgba(255, 105, 180, .55));
+      opacity: .42; animation: drift linear infinite;
+    }
+    .petal::after { content: ""; position: absolute; inset: 2px; border-radius: inherit; background: rgba(255,255,255,.35); }
+    @keyframes drift {
+      0% { transform: translateY(-10vh) translateX(0) rotate(0); }
+      50% { transform: translateY(55vh) translateX(26px) rotate(160deg); }
+      100% { transform: translateY(115vh) translateX(-18px) rotate(360deg); }
+    }
+
+    .app { width: min(1100px, 94vw); margin: 40px auto 50px; padding-bottom: 14px; }
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--gb);
+      box-shadow: var(--sh);
+      border-radius: 24px;
+    }
+
+    .music { position: fixed; top: 20px; right: 20px; z-index: 30; padding: 12px; width: 205px; }
+    .m-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+    .m-btn {
+      position: relative; width: 46px; height: 46px; border: 0; border-radius: 50%;
+      color: #fff; font-size: 20px; cursor: pointer;
+      background: linear-gradient(140deg, var(--a2), var(--a3));
+      box-shadow: 0 8px 20px rgba(255, 20, 147, .35);
+      overflow: hidden; transition: transform .3s;
+    }
+    .m-btn:hover { transform: translateY(-2px) scale(1.04); }
+    .m-btn.playing .icon { animation: spin 1.4s linear infinite; }
+    .m-btn .bn {
+      position: absolute; left: 50%; top: 50%; font-size: 15px; color: #fff;
+      pointer-events: none; transform: translate(-50%, -50%); opacity: 0;
+      animation: note 1.2s ease-out forwards;
+    }
+    @keyframes note {
+      0% { opacity: .9; transform: translate(-50%, -50%) scale(.4); }
+      100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.15); }
+    }
+    @keyframes spin {
+      0% { transform: rotate(0) scale(1); }
+      50% { transform: rotate(12deg) scale(1.13); }
+      100% { transform: rotate(0) scale(1); }
+    }
+
+    .eq { display: flex; align-items: flex-end; gap: 4px; height: 28px; flex: 1; }
+    .eq span {
+      width: 7px; height: 6px; border-radius: 6px;
+      background: linear-gradient(var(--a2), var(--a3));
+      transition: height .18s;
+    }
+    .wave {
+      height: 8px; border-radius: 99px;
+      background: linear-gradient(90deg, rgba(255, 182, 193, .35), rgba(255, 20, 147, .62), rgba(255, 182, 193, .35));
+      background-size: 200% 100%;
+      margin: 8px 0; opacity: .6;
+    }
+    .wave.on { animation: wf 1s linear infinite, wp .7s ease-in-out infinite alternate; }
+    @keyframes wf { from { background-position: 0 0; } to { background-position: 200% 0; } }
+    @keyframes wp { from { transform: scaleX(.95); opacity: .5; } to { transform: scaleX(1.04); opacity: .95; } }
+
+    .vol { display: flex; align-items: center; gap: 8px; color: var(--a3); font-size: 12px; font-weight: 600; }
+    .vol input { accent-color: var(--a3); width: 100%; }
+
+    .hero { padding: 28px 26px; position: relative; overflow: hidden; }
+    .hero::before {
+      content: "";
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(circle at 8% 30%, rgba(255,255,255,.55), transparent 42%),
+        radial-gradient(circle at 80% 22%, rgba(255,105,180,.26), transparent 40%);
+    }
+    h1 {
+      margin: 0; font-family: "Playfair Display", serif; font-size: clamp(2rem, 4vw, 3rem);
+      letter-spacing: .6px;
+      background: linear-gradient(95deg, var(--a2), #fff, var(--a3));
+      background-size: 220% 100%;
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      animation: ts 3.6s linear infinite;
+    }
+    @keyframes ts { 0% { background-position: 0 0; } 100% { background-position: 220% 0; } }
+    .sub { margin-top: 8px; color: var(--mut); font-size: .95rem; }
+    .main { margin-top: 18px; padding: 20px; }
+    .panel-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 12px; }
+    .section-title { margin: 0; font-size: 1rem; font-weight: 700; color: var(--a3); }
+    .section-note { margin: 4px 0 0; color: var(--mut); font-size: .82rem; }
+    .legend { display: flex; gap: 7px; flex-wrap: wrap; }
+    .legend .pill { font-size: .72rem; }
+    .composer { display: grid; grid-template-columns: 2fr 1fr 1.2fr 1.1fr auto; gap: 10px; align-items: end; }
+    .ctrl { display: grid; gap: 6px; }
+    .ctrl label { font-size: .75rem; font-weight: 700; letter-spacing: .2px; color: var(--mut); padding-left: 2px; }
+
+    .field,.sel,.date,.sort,.fbtn,.tbtn,.cbtn,.add {
+      border: 1px solid rgba(255, 105, 180, .25);
+      background: rgba(255, 255, 255, .72);
+      border-radius: 14px;
+      color: var(--tx);
+      font-family: inherit;
+    }
+    body.dark .field, body.dark .sel, body.dark .date, body.dark .sort, body.dark .fbtn, body.dark .tbtn, body.dark .cbtn {
+      background: rgba(66, 25, 53, .7);
+      border-color: rgba(255, 182, 223, .25);
+      color: var(--tx);
+    }
+    .field,.sel,.date,.sort { padding: 12px; outline: none; transition: box-shadow .25s, border-color .25s; }
+    .field:focus,.sel:focus,.date:focus,.sort:focus { border-color: var(--a3); box-shadow: 0 0 0 3px rgba(255, 20, 147, .18); }
+
+    .sh { position: relative; overflow: hidden; cursor: pointer; transition: transform .28s, box-shadow .28s; }
+    .sh::before {
+      content: ""; position: absolute; top: 0; left: -150%; width: 60%; height: 100%;
+      background: linear-gradient(110deg, transparent, rgba(255,255,255,.8), transparent);
+      transform: skewX(-20deg); transition: left .5s;
+    }
+    .sh:hover::before { left: 180%; }
+    .sh:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255,20,147,.2); }
+
+    .add {
+      width: 50px; height: 50px; border-radius: 15px; font-size: 1.8rem; font-weight: 700;
+      color: #fff; border: 0; background: linear-gradient(140deg, var(--a2), var(--a3));
+    }
+    .add:hover { transform: rotate(45deg) translateY(-1px); }
+
+    .toolbar { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+    .list-head {
+      margin-top: 16px; display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap;
+      padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, .54); border: 1px dashed rgba(255, 105, 180, .28);
+    }
+    body.dark .list-head { background: rgba(63, 22, 50, .62); border-color: rgba(255, 182, 223, .3); }
+    .list-title { margin: 0; font-size: .9rem; color: var(--a3); font-weight: 700; }
+    .list-info { font-size: .8rem; color: var(--mut); font-weight: 600; }
+    .tips {
+      margin-top: 10px; padding: 10px 12px; border-radius: 12px;
+      background: linear-gradient(90deg, rgba(255, 182, 193, .28), rgba(255, 240, 245, .72));
+      border: 1px solid rgba(255, 105, 180, .2); color: var(--mut); font-size: .8rem;
+    }
+    body.dark .tips { background: linear-gradient(90deg, rgba(255, 127, 200, .18), rgba(95, 40, 74, .62)); }
+    .fbtn,.tbtn,.cbtn,.sort { padding: 10px 14px; font-weight: 600; font-size: .88rem; }
+    .fbtn.on {
+      color: #fff; border-color: transparent; background: linear-gradient(120deg, var(--a2), var(--a3));
+      box-shadow: 0 8px 20px rgba(255,20,147,.24);
+    }
+
+    .stats { margin-top: 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .stat {
+      padding: 12px; border-radius: 15px; background: rgba(255,255,255,.62);
+      border: 1px solid rgba(255,105,180,.2); text-align: center;
+    }
+    body.dark .stat { background: rgba(65,24,51,.68); border-color: rgba(255,182,223,.2); }
+    .stat b { display: block; font-size: 1.15rem; color: var(--a3); }
+
+    .prog-wrap {
+      margin-top: 14px; padding: 12px; border-radius: 14px;
+      background: rgba(255,255,255,.62); border: 1px solid rgba(255,105,180,.2);
+    }
+    body.dark .prog-wrap { background: rgba(65,24,51,.68); border-color: rgba(255,182,223,.2); }
+    .prog-track { width: 100%; height: 14px; border-radius: 999px; background: rgba(255,105,180,.17); overflow: hidden; }
+    .prog-fill {
+      height: 100%; width: 0; border-radius: inherit;
+      background: linear-gradient(90deg, var(--a2), var(--a3));
+      transition: width .55s cubic-bezier(.2,.85,.18,1);
+      box-shadow: 0 0 12px rgba(255,20,147,.55);
+    }
+    .prog-lab { margin-top: 7px; font-size: .84rem; color: var(--mut); }
+
+    .tasks { margin-top: 14px; display: grid; gap: 12px; }
+    .task {
+      display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center;
+      padding: 13px; border-radius: 16px; background: rgba(255,255,255,.64);
+      border: 1px solid rgba(255,105,180,.23); box-shadow: 0 10px 24px rgba(255,105,180,.14);
+      animation: tin .54s cubic-bezier(.2,1.1,.3,1) both;
+    }
+    body.dark .task { background: rgba(67,24,53,.72); border-color: rgba(255,182,223,.26); }
+    @keyframes tin { from { opacity: 0; transform: translateX(-48px) scale(.93); } to { opacity: 1; transform: translateX(0) scale(1); } }
+    .task.del { animation: tout .36s ease forwards; }
+    @keyframes tout { to { opacity: 0; transform: translateX(-80px); max-height: 0; margin: 0; padding-top: 0; padding-bottom: 0; } }
+
+    .check {
+      width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--a2);
+      cursor: pointer; display: grid; place-items: center; font-size: 14px; color: #fff;
+      transition: all .28s; background: rgba(255,255,255,.7);
+    }
+    .task.done .check { background: linear-gradient(130deg, var(--a2), var(--a3)); border-color: transparent; transform: scale(1.08); }
+    .tb { min-width: 0; }
+    .tt { margin: 0; font-size: .95rem; font-weight: 600; line-height: 1.4; word-wrap: break-word; cursor: text; }
+    .task.done .tt { color: var(--mut); text-decoration: line-through; text-decoration-thickness: 2px; }
+    .meta { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 7px; font-size: .74rem; color: var(--mut); align-items: center; }
+    .pill { padding: 5px 8px; border-radius: 999px; background: rgba(255,182,193,.25); border: 1px solid rgba(255,105,180,.22); }
+    .pri { color: #fff; font-weight: 700; border: 0; } .pri.high { background: var(--hi); } .pri.medium { background: var(--md); } .pri.low { background: var(--lo); color: #7f3758; }
+    .acts { display: flex; flex-direction: column; gap: 8px; }
+    .ib { border: 1px solid rgba(255,105,180,.3); background: rgba(255,255,255,.78); color: var(--a3); border-radius: 10px; width: 36px; height: 36px; cursor: pointer; font-size: 1.05rem; }
+    body.dark .ib { background: rgba(79,32,63,.72); border-color: rgba(255,182,223,.24); }
+    .task.drag { opacity: .5; transform: scale(.98); }
+
+    .empty { text-align: center; padding: 24px 12px; color: var(--mut); display: none; }
+    .empty svg { width: 140px; margin-bottom: 8px; }
+
+    .toasts { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 99; display: grid; gap: 8px; pointer-events: none; }
+    .toast {
+      padding: 10px 14px; border-radius: 12px; color: #fff; font-size: .86rem;
+      background: linear-gradient(120deg, var(--a2), var(--a3));
+      box-shadow: 0 9px 20px rgba(255,20,147,.32);
+      animation: ti .35s ease, to .35s ease 2.5s forwards;
+    }
+    @keyframes ti { from { opacity: 0; transform: translateY(16px) scale(.93); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes to { to { opacity: 0; transform: translateY(10px) scale(.95); } }
+    .cf,.ht { position: fixed; pointer-events: none; z-index: 60; animation: pop 1s ease-out forwards; }
+    .cf { width: 8px; height: 8px; border-radius: 2px; }
+    .ht { font-size: 14px; color: var(--a3); }
+    @keyframes pop { from { opacity: 1; transform: translate(0,0) scale(1); } to { opacity: 0; transform: translate(var(--x),var(--y)) rotate(var(--r)) scale(.45); } }
+
+    .fu { opacity: 0; transform: translateY(16px); animation: fu .65s ease forwards; animation-delay: var(--d, 0s); }
+    @keyframes fu { to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 920px) {
+      .composer { grid-template-columns: 1fr 1fr; }
+      .add { width: 100%; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .music { width: 190px; }
+    }
+    @media (max-width: 768px) {
+      .app {
+        width: min(100%, 96vw);
+        margin: 16px auto 26px;
+        padding-bottom: 92px;
+      }
+      .hero { padding: 20px 16px; }
+      .main { padding: 14px; }
+      .composer { grid-template-columns: 1fr; gap: 10px; }
+      .ctrl label { font-size: .8rem; }
+      .field, .sel, .date, .sort { font-size: 16px; }
+      .add {
+        width: 100%;
+        height: 48px;
+        font-size: 1.4rem;
+      }
+      .toolbar {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .toolbar > * { width: 100%; min-height: 42px; }
+      .sort { grid-column: 1 / -1; }
+      .list-head { padding: 10px; }
+      .task { padding: 12px; gap: 10px; }
+      .tt { font-size: .92rem; }
+      .meta { font-size: .72rem; gap: 6px; }
+      .acts {
+        grid-column: 1 / -1;
+        flex-direction: row;
+        justify-content: flex-end;
+      }
+      .ib { width: 40px; height: 40px; }
+      .music {
+        top: auto;
+        bottom: max(10px, env(safe-area-inset-bottom));
+        right: 10px;
+        left: 10px;
+        width: auto;
+        padding: 10px;
+        border-radius: 16px;
+      }
+      .m-btn { width: 42px; height: 42px; }
+      .eq { height: 24px; }
+      .wave { margin: 6px 0; }
+    }
+    @media (max-width: 600px) {
+      .app { width: 96vw; margin-top: 12px; }
+      .panel-head { flex-direction: column; }
+      .fbtn,.tbtn,.cbtn,.sort { font-size: .79rem; padding: 8px 10px; }
+      .stats { grid-template-columns: 1fr 1fr; }
+      .task { grid-template-columns: auto 1fr; }
+      .music .vol { font-size: 11px; }
+      h1 { font-size: clamp(1.7rem, 8vw, 2.1rem); }
+      .sub { font-size: .88rem; }
+      .section-note, .tips { font-size: .76rem; }
+    }
+    @media (max-width: 420px) {
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+      .stats {
+        grid-template-columns: 1fr;
+      }
+      .list-head { gap: 4px; }
+      .list-info { font-size: .76rem; }
+      .check { width: 22px; height: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="petal-field" id="petals"></div>
+
+  <aside class="music glass fu" style="--d:.05s">
+    <div class="m-head">
+      <button id="mToggle" class="m-btn" title="Play/Pause Melody"><span class="icon">&#9834;</span></button>
+      <div class="eq" id="eq"><span></span><span></span><span></span><span></span><span></span></div>
+    </div>
+    <div id="wave" class="wave"></div>
+    <label class="vol" for="vol"><span>&#128266;</span><input id="vol" type="range" min="0" max="1" step="0.01" value="0.6"/></label>
+  </aside>
+
+  <main class="app">
+    <section class="hero glass fu" style="--d:.1s">
+      <h1>Blossom To-Do Symphony</h1>
+      <p class="sub">To-do list pink elegan dengan melodi interaktif dan animasi lembut.</p>
+    </section>
+
+    <section class="main glass fu" style="--d:.2s">
+      <div class="panel-head">
+        <div>
+          <h2 class="section-title">Buat Tugas Baru</h2>
+          <p class="section-note">Isi detail dengan jelas supaya task lebih rapi dan mudah diprioritaskan.</p>
+        </div>
+        <div class="legend">
+          <span class="pill pri high">Tinggi</span>
+          <span class="pill pri medium">Sedang</span>
+          <span class="pill pri low">Rendah</span>
+        </div>
+      </div>
+
+      <form id="form" class="composer">
+        <div class="ctrl">
+          <label for="txt">Nama Tugas</label>
+          <input id="txt" class="field" type="text" maxlength="180" required placeholder="Contoh: Finalisasi presentasi klien"/>
+        </div>
+        <div class="ctrl">
+          <label for="pri">Prioritas</label>
+          <select id="pri" class="sel" aria-label="Prioritas">
+            <option value="high">Prioritas Tinggi</option>
+            <option value="medium" selected>Prioritas Sedang</option>
+            <option value="low">Prioritas Rendah</option>
+          </select>
+        </div>
+        <div class="ctrl">
+          <label for="cat">Kategori</label>
+          <select id="cat" class="sel" aria-label="Kategori">
+            <option value="work">&#128188; Kerja</option>
+            <option value="study">&#128218; Belajar</option>
+            <option value="personal">&#127800; Pribadi</option>
+            <option value="shopping">&#128717;&#65039; Belanja</option>
+          </select>
+        </div>
+        <div class="ctrl">
+          <label for="ddl">Deadline</label>
+          <input id="ddl" class="date" type="date" aria-label="Deadline"/>
+        </div>
+        <button class="add sh" type="submit" title="Tambah">+</button>
+      </form>
+
+      <div class="tips">
+        Tips cepat: Double-click judul untuk edit, drag task saat mode "Urutan Manual", dan klik checklist untuk selesai.
+      </div>
+
+      <div class="toolbar fu" style="--d:.25s">
+        <button class="fbtn sh on" data-f="all">Semua</button>
+        <button class="fbtn sh" data-f="active">Aktif</button>
+        <button class="fbtn sh" data-f="done">Selesai</button>
+        <button class="fbtn sh" data-f="today">Hari Ini</button>
+        <select id="sort" class="sort" aria-label="Sortir">
+          <option value="manual">Urutan Manual</option>
+          <option value="priority">Sortir: Prioritas</option>
+          <option value="date">Sortir: Tanggal</option>
+          <option value="alpha">Sortir: Alfabet</option>
+        </select>
+        <button id="theme" class="tbtn sh" type="button">&#127769; Mode Gelap</button>
+        <button id="clear" class="cbtn sh" type="button">Bersihkan Selesai</button>
+      </div>
+
+      <div class="stats fu" style="--d:.3s">
+        <div class="stat"><b id="stTotal">0</b>Total</div>
+        <div class="stat"><b id="stDone">0</b>Selesai</div>
+        <div class="stat"><b id="stLeft">0</b>Tersisa</div>
+        <div class="stat"><b id="stLate">0</b>Terlambat</div>
+      </div>
+
+      <div class="prog-wrap fu" style="--d:.35s">
+        <div class="prog-track"><div id="pFill" class="prog-fill"></div></div>
+        <div id="pLab" class="prog-lab">Progress: 0%</div>
+      </div>
+
+      <div class="list-head">
+        <h3 class="list-title">Daftar Tugas</h3>
+        <span class="list-info" id="listInfo">Menampilkan 0 tugas</span>
+      </div>
+
+      <section id="list" class="tasks"></section>
+      <div id="empty" class="empty">
+        <svg viewBox="0 0 220 170" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="110" cy="100" r="56" fill="#FFD9E9"/><circle cx="110" cy="100" r="23" fill="#FF69B4"/>
+          <ellipse cx="66" cy="78" rx="18" ry="28" fill="#FFB6C1"/><ellipse cx="154" cy="78" rx="18" ry="28" fill="#FFB6C1"/>
+          <ellipse cx="86" cy="126" rx="18" ry="28" fill="#FFB6C1"/><ellipse cx="134" cy="126" rx="18" ry="28" fill="#FFB6C1"/>
+          <path d="M110 165V110" stroke="#FF69B4" stroke-width="6" stroke-linecap="round"/>
+          <path d="M110 132C92 131 81 144 78 160" stroke="#FF8BC1" stroke-width="5" stroke-linecap="round"/>
+          <path d="M110 142C128 141 139 152 144 166" stroke="#FF8BC1" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+        <h3 style="margin:6px 0 4px;color:var(--a3)">Belum ada tugas</h3>
+        <p style="margin:0">Tambah tugas pertamamu dan biarkan produktivitas bermekaran.</p>
+      </div>
+    </section>
+  </main>
+
+  <div class="toasts" id="toasts"></div>
+
+  <script>
+    (() => {
+      "use strict";
+      const K = "blossom_todo_v1", S = "blossom_todo_settings_v1";
+      const PS = { high: 3, medium: 2, low: 1 };
+      const CM = {
+        work: "&#128188; Kerja",
+        study: "&#128218; Belajar",
+        personal: "&#127800; Pribadi",
+        shopping: "&#128717;&#65039; Belanja"
+      };
+      const D = {
+        body: q("body"), form: q("#form"), txt: q("#txt"), pri: q("#pri"), cat: q("#cat"), ddl: q("#ddl"),
+        list: q("#list"), empty: q("#empty"), fbtn: qa(".fbtn"), sort: q("#sort"), clear: q("#clear"),
+        theme: q("#theme"), pFill: q("#pFill"), pLab: q("#pLab"), listInfo: q("#listInfo"), stTotal: q("#stTotal"), stDone: q("#stDone"),
+        stLeft: q("#stLeft"), stLate: q("#stLate"), toasts: q("#toasts"), petals: q("#petals"),
+        mToggle: q("#mToggle"), eq: qa("#eq span"), wave: q("#wave"), vol: q("#vol")
+      };
+
+      let tasks = [], filter = "all", sort = "manual", dragId = null;
+      let ax = null, mg = null, mInt = null, eqInt = null, melody = false, step = 0, vol = 0.6;
+      let song = null, useSong = false;
+
+      load(); petals(); render(); bind(); eqIdle();
+      setupSong();
+
+      function bind() {
+        D.form.addEventListener("submit", addTask);
+        D.fbtn.forEach((b) => b.addEventListener("click", () => {
+          filter = b.dataset.f; D.fbtn.forEach((x) => x.classList.toggle("on", x === b)); saveS(); render();
+        }));
+        D.sort.addEventListener("change", () => { sort = D.sort.value; saveS(); render(); });
+        D.clear.addEventListener("click", clearDone);
+        D.theme.addEventListener("click", () => {
+          D.body.classList.toggle("dark"); themeLab(); saveS();
+          toast(D.body.classList.contains("dark") ? "Mode gelap aktif." : "Mode terang aktif.");
+        });
+        D.mToggle.addEventListener("click", toggleMelody);
+        D.vol.addEventListener("input", () => {
+          vol = +D.vol.value;
+          if (mg) mg.gain.setTargetAtTime(vol, now(), .02);
+          if (song) song.volume = vol;
+          saveS();
+        });
+      }
+
+      function load() {
+        try { tasks = JSON.parse(localStorage.getItem(K) || "[]"); if (!Array.isArray(tasks)) tasks = []; } catch { tasks = []; }
+        try {
+          const s = JSON.parse(localStorage.getItem(S) || "{}");
+          if (s.filter) filter = s.filter;
+          if (s.sort) sort = s.sort;
+          if (typeof s.dark === "boolean") D.body.classList.toggle("dark", s.dark);
+          if (typeof s.vol === "number") { vol = clamp(s.vol, 0, 1); D.vol.value = String(vol); }
+        } catch {}
+        D.fbtn.forEach((b) => b.classList.toggle("on", b.dataset.f === filter));
+        D.sort.value = sort; themeLab();
+      }
+      const saveT = () => localStorage.setItem(K, JSON.stringify(tasks));
+      const saveS = () => localStorage.setItem(S, JSON.stringify({ filter, sort, dark: D.body.classList.contains("dark"), vol }));
+
+      function render() {
+        const v = visible();
+        D.list.innerHTML = "";
+        v.forEach((t, i) => D.list.appendChild(card(t, i)));
+        D.empty.style.display = v.length ? "none" : "block";
+        D.listInfo.textContent = `Menampilkan ${v.length} dari ${tasks.length} tugas`;
+        stats();
+      }
+      function visible() {
+        let l = [...tasks];
+        if (filter === "active") l = l.filter((t) => !t.completed);
+        if (filter === "done") l = l.filter((t) => t.completed);
+        if (filter === "today") l = l.filter((t) => t.deadline === today());
+        if (sort === "priority") l.sort((a, b) => PS[b.priority] - PS[a.priority] || a.createdAt - b.createdAt);
+        if (sort === "date") l.sort((a, b) => {
+          if (!a.deadline && !b.deadline) return a.createdAt - b.createdAt;
+          if (!a.deadline) return 1;
+          if (!b.deadline) return -1;
+          return a.deadline.localeCompare(b.deadline);
+        });
+        if (sort === "alpha") l.sort((a, b) => a.text.localeCompare(b.text, "id", { sensitivity: "base" }));
+        return l;
+      }
+
+      function card(t, i) {
+        const el = document.createElement("article");
+        el.className = `task ${t.completed ? "done" : ""}`;
+        el.dataset.id = String(t.id);
+        el.draggable = sort === "manual";
+        el.style.animationDelay = `${Math.min(i * .04, .2)}s`;
+        const od = overdue(t), dl = t.deadline ? fDate(t.deadline) : "Tanpa deadline";
+        el.innerHTML = `
+          <button class="check" type="button">${t.completed ? "✓" : ""}</button>
+          <div class="tb">
+            <p class="tt" title="Double-click untuk edit">${esc(t.text)}</p>
+            <div class="meta">
+              <span class="pill pri ${t.priority}">${pLab(t.priority)}</span>
+              <span class="pill">${CM[t.category] || CM.personal}</span>
+              <span class="pill">&#128197; ${dl}</span>
+              ${od ? `<span class="pill" style="color:#fff;background:#f06292;border:none;">&#9888; Terlambat</span>` : ""}
+            </div>
+          </div>
+          <div class="acts">
+            <button class="ib sh ed" type="button">&#9998;&#65039;</button>
+            <button class="ib sh rm" type="button">&#128465;&#65039;</button>
+          </div>`;
+        const ck = el.querySelector(".check"), rm = el.querySelector(".rm"), ed = el.querySelector(".ed"), tt = el.querySelector(".tt");
+        ck.addEventListener("click", () => toggleDone(t.id, el, ck));
+        rm.addEventListener("click", () => delTask(t.id, el));
+        ed.addEventListener("click", () => edit(t.id, tt));
+        tt.addEventListener("dblclick", () => edit(t.id, tt));
+        dragBind(el);
+        return el;
+      }
+
+      function stats() {
+        const total = tasks.length, done = tasks.filter((t) => t.completed).length, left = total - done;
+        const late = tasks.filter((t) => overdue(t)).length, pct = total ? Math.round((done / total) * 100) : 0;
+        D.stTotal.textContent = String(total);
+        D.stDone.textContent = String(done);
+        D.stLeft.textContent = String(left);
+        D.stLate.textContent = String(late);
+        D.pFill.style.width = `${pct}%`;
+        D.pLab.textContent = `Progress: ${pct}% (${done}/${total})`;
+      }
+
+      function addTask(e) {
+        e.preventDefault();
+        const text = D.txt.value.trim(); if (!text) return;
+        tasks.unshift({
+          id: Date.now() + Math.floor(Math.random() * 1000),
+          text, priority: D.pri.value, category: D.cat.value, deadline: D.ddl.value || "",
+          completed: false, createdAt: Date.now()
+        });
+        saveT(); render(); D.txt.value = ""; D.txt.focus(); ding(); toast("Tugas baru berhasil ditambahkan.");
+      }
+      function toggleDone(id, cardEl, ck) {
+        const t = tasks.find((x) => x.id === id); if (!t) return;
+        t.completed = !t.completed; saveT(); render();
+        if (t.completed) { chime(); blast(cardEl.getBoundingClientRect()); toast("Tugas selesai. Hebat!"); }
+        else toast("Status tugas diubah ke aktif.");
+        ck.blur();
+      }
+      function delTask(id, el) {
+        el.classList.add("del"); swoosh();
+        setTimeout(() => { tasks = tasks.filter((t) => t.id !== id); saveT(); render(); toast("Tugas dihapus."); }, 320);
+      }
+      function clearDone() {
+        const n = tasks.filter((t) => t.completed).length;
+        if (!n) return toast("Tidak ada tugas selesai untuk dibersihkan.");
+        tasks = tasks.filter((t) => !t.completed); saveT(); render(); swoosh(); toast(`${n} tugas selesai dibersihkan.`);
+      }
+      function edit(id, node) {
+        const t = tasks.find((x) => x.id === id); if (!t) return;
+        const inp = document.createElement("input");
+        inp.className = "field"; inp.value = t.text; inp.style.width = "100%"; inp.style.padding = "8px 10px"; inp.style.fontSize = ".92rem";
+        node.parentElement.replaceChild(inp, node); inp.focus(); inp.select();
+        const done = () => { const v = inp.value.trim(); if (v) { t.text = v; saveT(); toast("Tugas diperbarui."); } render(); };
+        inp.addEventListener("keydown", (e) => { if (e.key === "Enter") done(); if (e.key === "Escape") render(); });
+        inp.addEventListener("blur", done, { once: true });
+      }
+
+      function dragBind(el) {
+        if (sort !== "manual") return;
+        el.addEventListener("dragstart", (e) => { dragId = +el.dataset.id; el.classList.add("drag"); e.dataTransfer.effectAllowed = "move"; });
+        el.addEventListener("dragend", () => { dragId = null; el.classList.remove("drag"); });
+        el.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; });
+        el.addEventListener("drop", (e) => {
+          e.preventDefault();
+          const target = +el.dataset.id; if (!dragId || dragId === target) return;
+          const from = tasks.findIndex((t) => t.id === dragId), to = tasks.findIndex((t) => t.id === target);
+          if (from < 0 || to < 0) return;
+          const [m] = tasks.splice(from, 1); tasks.splice(to, 0, m); saveT(); render();
+        });
+      }
+
+      function initA() {
+        if (ax) return;
+        ax = new (window.AudioContext || window.webkitAudioContext)();
+        mg = ax.createGain(); mg.gain.value = vol; mg.connect(ax.destination);
+      }
+      const now = () => ax ? ax.currentTime : 0;
+      function toggleMelody() {
+        melody = !melody;
+        D.mToggle.classList.toggle("playing", melody);
+        D.wave.classList.toggle("on", melody);
+
+        if (useSong && song) {
+          if (melody) {
+            song.play().catch(() => {
+              melody = false;
+              D.mToggle.classList.remove("playing");
+              D.wave.classList.remove("on");
+              eqIdle();
+              toast("Autoplay diblokir browser. Coba klik lagi.");
+            });
+            eqLive();
+            toast("Lagu diputar.");
+          } else {
+            song.pause();
+            eqIdle();
+            toast("Lagu dijeda.");
+          }
+          return;
+        }
+
+        initA(); if (ax.state === "suspended") ax.resume();
+        if (melody) { startMelody(); eqLive(); toast("Melodi aktif."); } else { stopMelody(); eqIdle(); toast("Melodi dijeda."); }
+      }
+      function startMelody() {
+        stopMelody();
+        const M = { C: 261.63, E: 329.63, G: 392.0 }, seq = ["C", "E", "G", "E", "C"], beat = 500;
+        mInt = setInterval(() => { const n = seq[step % seq.length]; step += 1; piano(M[n], .25); emitNote(); }, beat);
+      }
+      function stopMelody() { if (mInt) { clearInterval(mInt); mInt = null; } }
+      function piano(freq, dur = .22, off = 0) {
+        if (!ax || !mg) return;
+        const t = now() + off, o = ax.createOscillator(), g = ax.createGain(), f = ax.createBiquadFilter();
+        o.type = "triangle"; o.frequency.setValueAtTime(freq, t); f.type = "lowpass"; f.frequency.setValueAtTime(2200, t);
+        g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.28, t + .015); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+        o.connect(f); f.connect(g); g.connect(mg); o.start(t); o.stop(t + dur + .02);
+      }
+      function ding() { initA(); if (ax.state === "suspended") ax.resume(); piano(523.25, .2); }
+      function chime() { initA(); if (ax.state === "suspended") ax.resume(); piano(523.25, .38, 0); piano(659.25, .38, .03); piano(783.99, .42, .05); }
+      function swoosh() {
+        initA(); if (ax.state === "suspended") ax.resume();
+        const t = now(), len = ax.sampleRate * .16, buf = ax.createBuffer(1, len, ax.sampleRate), dt = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) { const p = i / len; dt[i] = (Math.random() * 2 - 1) * (1 - p) * .55; }
+        const s = ax.createBufferSource(); s.buffer = buf;
+        const f = ax.createBiquadFilter(); f.type = "bandpass"; f.frequency.setValueAtTime(1200, t); f.frequency.exponentialRampToValueAtTime(280, t + .16);
+        const g = ax.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.22, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + .16);
+        s.connect(f); f.connect(g); g.connect(mg); s.start(t); s.stop(t + .17);
+      }
+
+      function eqLive() {
+        if (eqInt) clearInterval(eqInt);
+        eqInt = setInterval(() => D.eq.forEach((b) => b.style.height = `${8 + Math.random() * 24}px`), 130);
+      }
+      function eqIdle() {
+        if (eqInt) clearInterval(eqInt);
+        D.eq.forEach((b, i) => b.style.height = `${6 + i * 2}px`);
+      }
+      function emitNote() {
+        if (!melody) return;
+        const n = document.createElement("span");
+        n.className = "bn"; n.innerHTML = Math.random() > .5 ? "&#9834;" : "&#9835;";
+        n.style.setProperty("--dx", `${(Math.random() * 130 - 65).toFixed(0)}px`);
+        n.style.setProperty("--dy", `${(-45 - Math.random() * 70).toFixed(0)}px`);
+        D.mToggle.appendChild(n); setTimeout(() => n.remove(), 1150);
+      }
+
+      function petals() {
+        const f = document.createDocumentFragment();
+        for (let i = 0; i < 28; i++) {
+          const p = document.createElement("span");
+          p.className = "petal"; p.style.left = `${Math.random() * 100}%`; p.style.top = `${Math.random() * 100}%`;
+          p.style.animationDuration = `${14 + Math.random() * 18}s`; p.style.animationDelay = `${-Math.random() * 15}s`;
+          p.style.transform = `scale(${0.7 + Math.random() * 1.4}) rotate(${Math.random() * 360}deg)`; f.appendChild(p);
+        }
+        D.petals.appendChild(f);
+      }
+      function blast(r) {
+        const x = r.left + r.width * .5, y = r.top + r.height * .4, c = ["#ff1493", "#ff69b4", "#ffb6c1", "#ffc8e3"];
+        for (let i = 0; i < 18; i++) {
+          const n = document.createElement("span");
+          n.className = "cf"; n.style.left = `${x}px`; n.style.top = `${y}px`; n.style.background = c[Math.floor(Math.random() * c.length)];
+          n.style.setProperty("--x", `${(Math.random() * 180 - 90).toFixed(0)}px`); n.style.setProperty("--y", `${(-20 - Math.random() * 130).toFixed(0)}px`);
+          n.style.setProperty("--r", `${(Math.random() * 360).toFixed(0)}deg`); document.body.appendChild(n); setTimeout(() => n.remove(), 1000);
+        }
+        for (let i = 0; i < 6; i++) {
+          const h = document.createElement("span");
+          h.className = "ht"; h.innerHTML = "&#9829;"; h.style.left = `${x}px`; h.style.top = `${y}px`;
+          h.style.setProperty("--x", `${(Math.random() * 140 - 70).toFixed(0)}px`); h.style.setProperty("--y", `${(-24 - Math.random() * 90).toFixed(0)}px`);
+          h.style.setProperty("--r", `${(Math.random() * 220 - 110).toFixed(0)}deg`); document.body.appendChild(h); setTimeout(() => h.remove(), 1000);
+        }
+      }
+      function toast(m) { const n = document.createElement("div"); n.className = "toast"; n.textContent = m; D.toasts.appendChild(n); setTimeout(() => n.remove(), 3000); }
+      function themeLab() { D.theme.innerHTML = D.body.classList.contains("dark") ? "&#9728;&#65039; Mode Terang" : "&#127769; Mode Gelap"; }
+      function pLab(p) { return p === "high" ? "Prioritas Tinggi" : p === "medium" ? "Prioritas Sedang" : "Prioritas Rendah"; }
+      function overdue(t) { return !t.completed && t.deadline && t.deadline < today(); }
+      function today() { return new Date().toISOString().slice(0, 10); }
+      function fDate(i) { return new Date(`${i}T00:00:00`).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" }); }
+      function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;"); }
+      function clamp(n, mn, mx) { return Math.max(mn, Math.min(mx, n)); }
+      function q(s) { return document.querySelector(s); }
+      function qa(s) { return Array.from(document.querySelectorAll(s)); }
+
+      function setupSong() {
+        song = new Audio("Kuning - Rumahsakit.mp3");
+        song.loop = true;
+        song.preload = "auto";
+        song.volume = vol;
+        useSong = true;
+        song.addEventListener("canplaythrough", () => { useSong = true; });
+        song.addEventListener("error", () => { useSong = false; });
+      }
+    })();
+  </script>
+</body>
+</html>
+
